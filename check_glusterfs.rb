@@ -71,15 +71,23 @@ opts = OptionParser.new do |opts|
 end	
 opts.parse!(ARGV)
 
+def calculate_size(size)
+	if size.match(/MB/)
+  	return size.gsub("MB","").to_f / 1024
+  else
+  	return size.gsub("GB","").to_f
+  end
+end
+
 
 # Parsing output of gluster command
 def parse_output(output)
   usage={}
   tmp= output.split("\n")[2].split(" ")
   @usage["path"] = tmp[0]
-  @usage["limit_set"] = tmp[1]
-  @usage["used"] = tmp[2]
-  @usage["free"] = @usage["limit_set"].to_f - @usage["used"].to_f
+  @usage["limit_set"] = claculate_size(tmp[1])
+  @usage["used"] = calculate_size(tmp[2])
+  @usage["free"] = @usage["limit_set"] - @usage["used"]
 end
 
 def get_volume_quota_usage(vol_name)
@@ -88,8 +96,8 @@ def get_volume_quota_usage(vol_name)
 end
 
 def calulate_threshold
-  @threshold["warning"] = @usage["limit_set"].to_f / 100.0 * @WARNING.to_f
-  @threshold["critical"] = @usage["limit_set"].to_f / 100.0 * @CRITICAL.to_f
+  @threshold["warning"] = @usage["limit_set"] / 100.0 * @WARNING.to_f
+  @threshold["critical"] = @usage["limit_set"] / 100.0 * @CRITICAL.to_f
 end
 
 
@@ -100,18 +108,18 @@ calulate_threshold
 
 # Check if it's a warning state or critical
 unless @usage["free"] >= @threshold["critical"]
-  puts "Volume #{@VOLUME_NAME} has #{@usage["free"]}GB free of #{@usage["limit_set"]} maximum space"
+  puts "Volume #{@VOLUME_NAME} has #{@usage["free"].round(2)}GB free of #{@usage["limit_set"]}GB maximum space"
   exit(2)
 end
 
 
 unless @usage["free"] >= @threshold["warning"]
-  puts "Volume #{@VOLUME_NAME} has #{@usage["free"]}GB free of #{@usage["limit_set"]} maximum space"
+  puts "Volume #{@VOLUME_NAME} has #{@usage["free"].round(2)}GB free of #{@usage["limit_set"]}GB maximum space"
   exit(1)
 end
 
 
-puts "Volume #{@VOLUME_NAME} has #{@usage["free"]}GB free of #{@usage["limit_set"]} maximum space"
+puts "Volume #{@VOLUME_NAME} has #{@usage["free"].round(2)}GB free of #{@usage["limit_set"]}GB maximum space"
 
 exit(0)
 
