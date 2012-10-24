@@ -83,7 +83,7 @@ def parse_output(output)
 end
 
 def get_volume_quota_usage(vol_name)
-  command = "gluster volume quota #{vol_name} list"
+  command = "sudo gluster volume quota #{vol_name} list"
   parse_output(`#{command}`)
 end
 
